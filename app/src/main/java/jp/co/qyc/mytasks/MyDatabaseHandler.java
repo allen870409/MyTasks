@@ -12,10 +12,11 @@ import java.util.List;
  * Created by A13054 on 2015/07/24.
  */
 public class MyDatabaseHandler extends SQLiteOpenHelper{
-    private static final String DB_NAME = "my_tasks";
+    private static final String DB_NAME = "my_tasks1";
     private static final int VERSION = 1;
     private static final String CREATE_TABLE="create table task" + "( _id integer primary" +
-            " key autoincrement, title text not null, date datetime not null);";
+            " key autoincrement, title String not null, priority integer not null, date String not null);";
+    SQLiteDatabase db;
 
     public MyDatabaseHandler(Context context) {
         super(context, DB_NAME, null, VERSION);
@@ -23,12 +24,12 @@ public class MyDatabaseHandler extends SQLiteOpenHelper{
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        this.db = db;
         db.execSQL(CREATE_TABLE);
-        insertData(db, "test1", "19631122121211");
-        insertData(db, "test2", "19631122121212");
-        insertData(db, "test3", "19631122121213");
-        insertData(db, "test4", "19631122121214");
-        insertData(db, "test5", "19631122121215");
+        for(int i = 0; i< 20 ; i++){
+            insert("test" + i, "19631122121211" + i);
+        }
+
     }
 
     @Override
@@ -36,19 +37,34 @@ public class MyDatabaseHandler extends SQLiteOpenHelper{
 
     }
 
-    private void insertData(SQLiteDatabase db, String title, String date){
+    public Task find(String id){
+        db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("select * from task where _id = ?", new String[]{id});
+        Task task = null;
+        if(cursor != null){
+            cursor.moveToFirst();
+            task = new Task(cursor.getInt(0), cursor.getString(1), cursor.getInt(2), cursor.getString(3));
+        }
+        return task;
+    }
+
+    public void update(String id, String title, String date){
+        db.execSQL("update task set title = ?, date = ? where _id = ?", new String[] {title, date, id});
+    }
+
+
+    public void insert(String title, String date){
         db.execSQL("insert into task values(null, ?, ?)", new String[] {title, date});
     }
 
     public List<Task> getALllContact(){
         List<Task> tasks = new ArrayList<Task>();
-
         String selectQuery="SELECT * FROM task";
         SQLiteDatabase db=this.getReadableDatabase();
         Cursor cursor=db.rawQuery(selectQuery,null);
         if(cursor.moveToFirst()){
             do{
-                Task task = new Task(cursor.getString(1), cursor.getString(2));
+                Task task = new Task(cursor.getInt(0), cursor.getString(1), cursor.getInt(2), cursor.getString(3));
                 tasks.add(task);
             }while(cursor.moveToNext());
         }
